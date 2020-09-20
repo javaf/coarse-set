@@ -3,14 +3,15 @@ import java.util.concurrent.locks.*;
 import java.util.concurrent.atomic.*;
 
 // Coarse Set is a collection of unique elements
-// maintained as a linked list. The list of nodes // are arranged in ascending order by their key,
+// maintained as a linked list. The list of nodes
+// are arranged in ascending order by their key,
 // which is obtained using `hashCode()`. This
 // facilitates the search of a item within the
 // list. When the list is empty, it contains two
 // sentinel nodes `head` and `tail` with minimum
 // and maximum key values respectively. These
 // sentinel nodes are not part of the set.
-
+// 
 // It uses a common, coarse-grained lock, for all
 // method calls. This set performs well only when
 // contention is low. If however, contention is
