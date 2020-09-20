@@ -2,37 +2,22 @@ import java.util.*;
 import java.util.concurrent.locks.*;
 import java.util.concurrent.atomic.*;
 
-// Coarse Set is a collection of unique elements maintained as a linked list. It uses a coarse grained lock, and useful when contention is low.
+// Coarse Set is a collection of unique elements
+// maintained as a linked list. The list of nodes // are arranged in ascending order by their key,
+// which is obtained using `hashCode()`. This
+// facilitates the search of a item within the
+// list. When the list is empty, it contains two
+// sentinel nodes `head` and `tail` with minimum
+// and maximum key values respectively. These
+// sentinel nodes are not part of the set.
 
-// Locked Queue uses locks and conditions to block
-// when queue is empty, or it is full. Just as
-// locks are inherently vulnerable to deadlock,
-// Condition objects are inherently vulnerable to
-// lost wakeups in which one or more threads wait
-// forever without realizing that the condition
-// for which they are waiting has become true.
-// 
-// This queue signals "not empty" whenever an item
-// is added to the queue, and "not full" whenever
-// an item is removed from the queue. However,
-// consider an optimization, where you only signal
-// "not empty" if the queue was empty. Bang! Lost
-// wakeup is suddenly possible.
-// 
-// To see how that is possible, consider 2
-// consumers A & B and 2 producers C & D. When
-// queue is empty and both A & B have to remove(),
-// they are blocked until C or D can add(). If C
-// add()s, followed by D, only 1 "not empty"
-// condition would be active causing C to wakeup,
-// but not D.
-// 
-// Hence, one needs to be careful when working with
-// both locks and condition objects.
-// 
-// The functionality of this queue is similar to
-// BlockingQueue and does not suffer from the lost
-// wakeup problem.
+// It uses a common, coarse-grained lock, for all
+// method calls. This set performs well only when
+// contention is low. If however, contention is
+// high, despite the performance of lock, all
+// methods calls will be essential sequential. The
+// main advantage of this algorithms is that its
+// obviously correct.
 
 class CoarseSet<T> extends AbstractSet<T> {
   final Lock lock;
@@ -82,6 +67,20 @@ class CoarseSet<T> extends AbstractSet<T> {
     return done;
   }
 
+  // 1. Acquire lock before any action.
+  // 2. Find node previous to search key.
+  // 3. Check if next node matches search key.
+  // 4. Release the lock.
+  @Override
+  public boolean contains(Object v) {
+    int k = v.hashCode();
+    lock.lock(); // 1
+    Node<T> p = findNode(k);       // 2
+    boolean has = p.next.key == k; // 3
+    lock.unlock(); // 4
+    return has;
+  }
+
   private boolean addNode(Node<T> p, Node<T> x) {
     Node<T> q = p.next;
     if (q.key == x.key) return false;
@@ -108,8 +107,10 @@ class CoarseSet<T> extends AbstractSet<T> {
   public Iterator<T> iterator() {
     Collection<T> a = new ArrayList<>();
     Node<T> p = head.next;
-    while (p.next != null)
+    while (p.next != null) {
       a.add(p.value);
+      p = p.next;
+    }
     return a.iterator();
   }
 

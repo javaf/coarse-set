@@ -1,21 +1,20 @@
 import java.util.*;
 
 class Main {
-  static Queue<String> queue;
-  static int CAP = 2;
-  static int OPS = 4;
-  // CAP: capacity of queue
-  // OPS: number to add()s / remove()s
+  static Set<Integer> set;
+  static int NUM = 10, OPS = 100;
 
-  static Thread consumer(String id, long wait) {
+  // Each thread removes a number from set
+  // and adds another number.
+  static Thread thread(int rem, int add) {
     Thread t = new Thread(() -> {
       try {
       for(int i=0; i<OPS; i++) {
-        log(id+": remove()\t"+queue);
-        String x = queue.remove();
-        log(id+": sleep()\t"+x);
-        Thread.sleep(wait);
+        boolean had = set.remove(rem);
+        if (had) set.add(add);
+        Thread.sleep(10);
       }
+      log(rem+" -> "+add+" : done");
       }
       catch(InterruptedException e) {}
     });
@@ -23,47 +22,42 @@ class Main {
     return t;
   }
 
-  static Thread producer(String id, long wait) {
-    Thread t = new Thread(() -> {
-      try {
-      for(int i=0; i<OPS; i++) {
-        log(id+": add()\t"+queue);
-        queue.add(id);
-        log(id+": sleep()\t"+queue);
-        Thread.sleep(wait);
-      }
-      }
-      catch(InterruptedException e) {}
-    });
-    t.start();
-    return t;
-  }
-
-  // For test to pass, consumers A, B
-  // should not remove same value.
-  static void testThreads(long waitc, long waitp) {
-    log("For test to pass, consumers A, B");
-    log("should not remove same value.");
-    Thread A = consumer("A", waitc);
-    Thread B = consumer("B", waitc);
-    Thread C = producer("C", waitp);
-    Thread D = producer("D", waitp);
+  static void testThreads() {
+    log("Positive threads convert -n -> +n.");
+    log("Negative threads convert +n -> -n.");
+    log("Starting "+NUM+" positive threads ...");
+    log("Starting "+NUM+" negative threads ...");
+    Thread[] p = new Thread[NUM];
+    Thread[] n = new Thread[NUM];
+    for (int i=0; i<NUM; i++) {
+      p[i] = thread(-i, i);
+      n[i] = thread(i, -i);
+    }
     try {
-    A.join();
-    B.join();
-    C.join();
-    D.join();
+    for (int i=0; i<NUM; i++) {
+      p[i].join();
+      n[i].join();
+    }
     }
     catch(InterruptedException e) {}
-    log("Test done.\n");
+  }
+
+  static void populateSet() {
+    set = new CoarseSet<>();
+    for(int i=0; i<NUM; i++)
+      set.add(i);
+  }
+
+  static boolean validateSet() {
+    return set.size() == NUM;
   }
 
   public static void main(String[] args) {
-    queue = new CoarseSet<>(CAP);
-    log("Starting fast consumers test ...");
-    testThreads(10, 20);
-    log("Starting fast producers test ...");
-    testThreads(20, 10);
+    populateSet();
+    log("Set: "+set.size()+" : "+set);
+    testThreads();
+    log("Set: "+set.size()+" : "+set);
+    log("Result passed? "+validateSet());
   }
 
   static void log(String x) {
