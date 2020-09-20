@@ -59,7 +59,7 @@ class Main {
   }
 
   public static void main(String[] args) {
-    queue = new LockedQueue<>(CAP);
+    queue = new CoarseSet<>(CAP);
     log("Starting fast consumers test ...");
     testThreads(10, 20);
     log("Starting fast producers test ...");
