@@ -16,6 +16,11 @@ methods calls will be essential sequential. The
 main advantage of this algorithms is that its
 obviously correct.
 
+> **Course**: [Concurrent Data Structures], Monsoon 2020\
+> **Taught by**: Prof. Govindarajulu Regeti
+
+[Concurrent Data Structures]: https://github.com/iiithf/concurrent-data-structures
+
 ```java
 add():
 1. Create new node beforehand.
